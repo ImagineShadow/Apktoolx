@@ -1,0 +1,243 @@
+#!/bin/bash
+#Vars
+user=$(whoami)
+
+#import colors
+black="\033[0;30m"
+red="\033[0;31m"
+green="\033[0;32m"
+brown_orange="\033[0;33m"
+blue="\033[0;34m"
+purple="\033[0;35m"
+cyan="\033[0;36m"
+light_gray="\033[0;37m"
+dark_gray="\033[1;30m"
+light_red="\033[1;31m"
+light_green="\033[1;32m"
+yellow="\033[1;33m"
+light_blue="\033[1;34m"
+light_purple="\033[1;35"
+light_cyan="\033[1;36m"
+white="\033[1;37m"
+nocolor="\033[0m"
+
+reset
+if [ ! -d compile ];then
+	mkdir compile
+fi
+if [ ! -d decompile ];then
+	mkdir decompile
+fi
+if [ ! -d sign ];then
+       mkdir sign	
+fi
+if [ ! -d output ];then
+	mkdir output
+fi
+
+function banner()
+{
+echo -e "
+
+    |              '||        .                   '||     '||' '|' 
+   |||    ... ...   ||  ..  .||.    ...     ...    ||       || |   
+  |  ||    ||'  ||  || .'    ||   .|  '|. .|  '|.  ||        ||    
+ .''''|.   ||    |  ||'|.    ||   ||   || ||   ||  ||       | ||   
+.|.  .||.  ||...'  .||. ||.  '|.'  '|..|'  '|..|' .||.    .|   ||. 
+           ||                                                      
+          ''''     
+    	                        	   by GoldenEagle from Sec World team
+			                   Our Tchannel : ${light_blue}@Sec_World
+	    	                           ${nocolor}My other projects: https://www.github.com/GoldenEagle-BlackHat   
+	    
+	    
+"
+}
+banner
+if [ "$user" != "root" ];then
+	echo -e $yellow"[!] recomended run script with Superuser access!\n${nocolor}"
+fi
+echo -e "1. Decompile apk file\n\
+2. Compile apk resource\n\
+3. Sign apk\n\
+4. Verify signed apk
+5. Increase apk size
+6. Clear screen\n
+0. Exit\n\n"
+
+while [ True ];do
+	read -p "$user:~> " op
+	case $op in
+		1)
+			cd decompile 2>> /var/log/apktoolx.log
+			echo -e "\n\nAvailable apk files:\n---------------------\n"
+			if [ -z "$(ls -1)" ];then
+				echo -e "\n   No apk file founded!\n\n"
+			else
+				if [ "$(ls -1 | grep apk)" ];then
+					ls -1 | grep apk | nl > /tmp/apkfiles.txt
+					sed 's/\t/- /g' /tmp/apkfiles.txt
+					rm /tmp/apkfiles.txt
+					echo -e "\n\n"
+					read -p "Filename: " filename
+					if [ -f $filename ];then
+							echo -e "\n${light_blue}[*] Decompiling apk file...${nocolor}"
+							apktool d $filename -o ../compile/${filename}-decoded > /dev/null 2>> /var/log/apktoolx.log
+							if [ $? -eq 0 ];then
+								echo -e "${light_green}[+] Apk file decompiled successfully!${nocolor}\n"
+
+							elif [ -d "../compile/${filename}-decoded" ];then
+										echo -e "${yellow}[!] It looks like there is a directory with the same name!${nocolor}\n"
+							else
+								echo -e "${light_red}\n[-] An error occurred!\n$yellow[!] See logs in /var/log/apktoolx.log\n\n${nocolor}\n"
+							fi
+					else
+						echo -e $light_red"\n[-] Invalid file!"$nocolor
+					fi
+				else
+					echo -e "\n   No apk file founded!\n\n"
+				fi
+			fi
+			cd ..
+			;;
+		2)
+			cd compile 2>> /var/log/apktoolx.log
+			echo -e "\n\nAvailable resources:\n---------------------\n"
+			if [ -z "$(ls -1)" ];then
+				echo -e "\n   No resource founded!\n\n"
+			else
+				if [ "$(file * | grep directory)" ];then
+					ls -1 | nl > /tmp/resources.txt
+					sed 's/\t/- /g' /tmp/resources.txt
+					rm /tmp/resources.txt
+					echo -e "\n\n"
+					read -p "Resource: " resname
+					if [ -d $resname ];then
+						echo -e $light_blue"\n[*] Compiling apk file..."$nocolor
+						apktool b $resname -o ../output/${resname}.apk > /dev/null 2>> /var/log/apktoolx.log
+						if [ $? -eq 0 ];then
+							echo -e $light_green"[+] Apk file compiled successfully!\n"$nocolor
+						else
+							echo -e "${light_red}\n[-] An error occurred!\n$yellow[!] See logs in /var/log/apktoolx.log\n\n${nocolor}\n"
+							if [ -f ${resname}/AndroidManifest.xml.orig ];then
+								rm -f AndroidManifest.xml.orig
+		                    fi
+						fi
+					else
+						echo -e $light_red"\n[-] Invalid resource!"$nocolor
+					fi
+				fi
+			fi
+			cd ..
+			;;
+		3)
+			if [ ! -f /opt/apktoolx/*.pem ] || [ ! -f /opt/apktoolx/*.pk8 ];then
+				echo -e $light_red"\n[-] Can't find required file(s). Please run installing file for fix problem${nocolor}\n"
+				exit 0
+			fi
+			cd sign 2>> /var/log/apktoolx.log
+		    echo -e "\n\nAvailable apk files:\n---------------------\n"
+			if [ -z "$(ls -1)" ];then
+				echo -e "\n   No apk file founded!\n\n"
+			else
+				if [ "$(ls -1 | grep apk)" ];then
+					ls -1 | grep apk | nl > /tmp/apkfiles.txt
+					sed 's/\t/- /g' /tmp/apkfiles.txt
+					rm /tmp/apkfiles.txt
+					echo -e "\n\n"
+					read -p "Filename: " filename
+					if [ -f $filename ];then
+							echo -e "\n${light_blue}[*] Signing apk file...$nocolor"
+							apksigner sign --key /opt/apktoolx/*.pk8 --cert /opt/apktoolx/*.pem $filename > /dev/null 2>> /var/log/apktoolx.log
+							if [ $? -eq 0 ];then
+								echo -e "${light_green}[+] Apk file signed successfully!\n${light_blue}[*] Signed apk replace with input file.${nocolor}\n\n"
+								mv $filename ${filename}-signed.apk
+							else
+								echo -e "${light_red}\n[-] An error occurred!\n$yellow[!] See logs in /var/log/apktoolx.log\n\n${nocolor}\n"
+							fi
+					else
+						echo -e $light_red"\n[-] Invalid file!"$nocolor
+					fi
+				else
+					echo -e "\n   No apk file founded!\n\n"
+				fi
+			fi
+
+			cd ..
+			;;
+
+		4)
+			cd sign 2>> /var/log/apktoolx.log
+			echo -e "\n\nAvailable apk files:\n---------------------\n"
+			if [ -z "$(ls -1)" ];then
+				echo -e "\n   No apk file founded!\n\n"
+			else
+				if [ "$(ls -1 | grep apk)" ];then
+					ls -1 | grep apk | nl > /tmp/apkfiles.txt
+					sed 's/\t/- /g' /tmp/apkfiles.txt
+					rm /tmp/apkfiles.txt
+					echo -e "\n\n"
+					read -p "Filename: " filename
+					if [ -f $filename ];then
+							echo -e "\n${light_blue}[*] Verifying signed apk...${nocolor}"
+							apksigner verify $filename > /dev/null 2>> /var/log/apktoolx.log
+							if [ $? -eq 0 ];then
+								echo -e $light_green"[+] Verify signed apk completed successfully!${nocolor}\n"
+							else
+								echo -e "${light_red}\n[-] An error occurred!\n$yellow[!] See logs in /var/log/apktoolx.log\n\n${nocolor}\n"
+							fi
+					else
+						echo -e $light_red"\n[-] Invalid file!"$nocolor
+					fi
+				else
+					echo -e "\n   No apk file founded!\n\n"
+				fi
+			fi
+			cd ..
+		;;
+		5)
+			cd compile 2>> /var/log/apktoolx.log
+                        echo -e "\n\nAvailable resources:\n---------------------\n"
+			if [ -z "$(ls -1)" ];then
+				echo -e "\n   No resource founded!\n\n"
+			else
+				if [ "$(file * | grep directory)" ];then
+					ls -1 | nl > /tmp/resources.txt
+					sed 's/\t/- /g' /tmp/resources.txt
+					rm /tmp/resources.txt
+					echo -e "\n\n"
+			                read -p "Resource: " resname
+			                if [ -d $resname ];then
+								if [ ! -d ${resname}/assets ];then
+										mkdir ${resname}/assets
+								fi
+			       			read -p "Size to increase(2M,5K,..): " size
+			       			echo -e $light_blue"\n[*] Increasing file size..."
+			       			truncate -s $size ${resname}/assets/temp.txt
+			       			tar cf ${resname}/assets/temp.tar ${resname}/assets/temp.txt > /dev/null 2>> /var/log/apktoolx.log
+			       			echo -e "[*] Removing temp files..."
+			       			rm ${resname}/assets/temp.txt
+			       			echo -e $light_green"[+] Increasing size process complete!\n"$nocolor
+                            else
+                               	echo -e $light_red"\n[-] Invalid resource!"$nocolor
+		                    fi      
+                 
+                fi
+			fi
+			cd ..
+			;;
+
+		6)
+			clear
+			;;
+
+		0)
+			echo -e "\n\n[*] Exiting..."
+			exit 0
+			;;
+
+		*)
+			echo -e $light_red"\n\n[-] Invalid input!"$nocolor
+			exit 0
+	esac
+done
