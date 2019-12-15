@@ -14,5 +14,5 @@ First of all run install.sh for installing.
 ***Run script with Super user access***
 
 For reporting bugs or ask any questions contact me on:
-Gmail: UnknownBlackHat.zeroday@gmail.com
-Telegram: @UnknownBlackHat
+Gmail: Alisafi.Engineer@gmail.com
+Telegram: @AliDesu
