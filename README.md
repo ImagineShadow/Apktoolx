@@ -1,5 +1,7 @@
 A useful & powerful Bash script for "Reverse engineering Apk files"
 
+YouTube demo: https://youtu.be/Fnf3-ykbYb4
+
 NOTE: Some bugs solved!
 
 First of all run install.sh for installing.
