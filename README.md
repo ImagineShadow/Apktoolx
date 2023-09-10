@@ -1,4 +1,4 @@
-A useful & powerful Bash script for "Reverse engineering Apk files"
+A simple bash script for "Reverse engineering Apk files" that uses Apktool
 
 YouTube demo: https://youtu.be/Fnf3-ykbYb4
 
